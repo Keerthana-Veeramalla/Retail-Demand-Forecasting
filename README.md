@@ -1,71 +1,191 @@
 # Retail Demand Forecasting & Explainability Dashboard
 
-Forecasts daily store sales using the Rossmann Store Sales dataset (Kaggle), comparing a Linear Regression baseline against XGBoost, validated with proper time-based splitting (not random shuffling), and explained with SHAP. Deployed as an interactive Streamlit dashboard.
+An end-to-end machine learning system for forecasting daily retail sales using the Rossmann Store Sales dataset. The project compares a Linear Regression baseline against an XGBoost model, applies proper time-series validation, and provides prediction explainability through SHAP within an interactive Streamlit dashboard.
 
-## Problem
+## Business Problem
 
-Retail businesses need to forecast demand to manage stock and staffing. Given a store's history (sales, promotions, holidays, competition), predict future daily sales — and explain *why* the model predicts what it predicts.
+Retail businesses must accurately forecast future demand to optimize inventory planning, staffing, and promotional strategies.
+
+This project predicts future daily sales for retail stores using historical sales patterns, promotional activities, holiday effects, and store-specific characteristics while explaining the factors driving each prediction.
+
+---
 
 ## Dataset
 
-[Rossmann Store Sales — Kaggle](https://www.kaggle.com/c/rossmann-store-sales)
-Historical daily sales for 1,115 European drug stores (Jan 2013 – Jul 2015), ~1M rows, including promotions, holidays, store type, and competition distance.
+**Rossmann Store Sales Dataset (Kaggle)**
 
-Download `train.csv` and `store.csv` from Kaggle and place them in the `data/` folder before running anything.
+* 1,115 retail stores
+* Daily sales records from January 2013 to July 2015
+* Over 1 million observations
+* Includes:
 
-## Approach
+  * Store information
+  * Promotions
+  * Holidays
+  * Competition distance
+  * Assortment type
+  * Historical sales
 
-1. **Feature engineering** (`feature_engineering.py`)
-   - Date/seasonality features: day-of-week, month, week-of-year, weekend flag, holiday flags
-   - Lag features: sales 1, 7, and 14 days ago (per store, no cross-store leakage)
-   - Rolling averages: 7-day and 30-day rolling mean sales (shifted to avoid leaking the current day)
-   - Categorical encoding for store type, assortment, promo interval
+Dataset used:
 
-2. **Modeling** (`train_model.py`)
-   - Baseline: Linear Regression (scaled features)
-   - Main model: XGBoost Regressor
-   - **Time-based train/test split** — last 42 days held out as test set; never randomly shuffled, since random splitting on time-series data leaks future information into training
-   - **Walk-forward validation** — 3 rolling folds to confirm the model is stable across different time windows, not just lucky on one split
-   - Metrics: RMSE and MAPE (regression metrics, not classification accuracy/F1)
+* `train.csv`
+* `store.csv`
 
-3. **Explainability + Dashboard** (`app.py`)
-   - SHAP TreeExplainer shows which features push a prediction up or down for a given store/day
-   - Streamlit dashboard: pick a store, see sales history, predicted-vs-actual on the holdout period, an N-day forward forecast, and the SHAP breakdown
+---
 
-## How to run
+## Methodology
 
-```bash
-pip install -r requirements.txt
+### 1. Data Preparation
 
-# 1. Place train.csv and store.csv (from Kaggle) into the data/ folder
+Merged sales and store datasets using Store ID and performed preprocessing to handle missing values and categorical variables.
 
-# 2. Build features
-python feature_engineering.py
+### 2. Feature Engineering
 
-# 3. Train models and see evaluation metrics in the console
-python train_model.py
+Generated time-series forecasting features including:
 
-# 4. Launch the dashboard
-streamlit run app.py
-```
+* Lag features:
+
+  * Sales 1 day ago
+  * Sales 7 days ago
+  * Sales 14 days ago
+
+* Rolling statistics:
+
+  * 7-day rolling average
+  * 30-day rolling average
+
+* Calendar features:
+
+  * Day of week
+  * Month
+  * Week of year
+  * Weekend indicator
+
+* Business features:
+
+  * Promotions
+  * Store type
+  * Assortment
+  * Competition distance
+  * School holidays
+  * State holidays
+
+Final dataset:
+
+* **828,782 rows**
+* **30 engineered features**
+
+---
+
+## Modeling Approach
+
+### Baseline Model
+
+Linear Regression
+
+### Main Model
+
+XGBoost Regressor
+
+### Validation Strategy
+
+Implemented proper time-series validation:
+
+* Time-based train/test split
+* Final 42 days reserved as holdout test set
+* Walk-forward validation using 3 rolling folds
+
+This prevents future information leakage and better reflects real-world forecasting scenarios.
+
+---
 
 ## Results
 
-*(Fill in after running on the real dataset — these numbers will differ from any test run)*
+### Holdout Test Performance
 
-| Model | RMSE | MAPE |
-|---|---|---|
-| Linear Regression (baseline) | — | — |
-| XGBoost | — | — |
+| Model             | RMSE    | MAPE   |
+| ----------------- | ------- | ------ |
+| Linear Regression | 1304.73 | 14.88% |
+| XGBoost           | 949.51  | 10.30% |
 
-Walk-forward validation (3 folds): *(paste your fold-by-fold RMSE/MAPE here)*
+### Walk-Forward Validation
 
-## Key design decisions
+| Fold   | RMSE    | MAPE   |
+| ------ | ------- | ------ |
+| Fold 1 | 1195.35 | 12.18% |
+| Fold 2 | 963.61  | N/A*   |
+| Fold 3 | 936.91  | 10.23% |
 
-- **Time-based split over random split**: random k-fold cross-validation on time-series data lets the model "see the future" during training, which inflates accuracy in a way that won't hold up in production. Splitting by date avoids this.
-- **Per-store grouping for lag features**: lag/rolling features are computed within each store's own history (`groupby("Store")`), so one store's data never leaks into another's.
-- **SHAP over generic feature importance**: SHAP shows the direction and magnitude of each feature's effect on a *specific* prediction, not just a global ranking — closer to what a business stakeholder actually wants to know ("why is the forecast high this week?").
+*MAPE became unstable due to zero-sales observations in the validation window.
 
-## Tech stack
+### Key Finding
 
-Python, pandas, scikit-learn, XGBoost, SHAP, Streamlit, Plotly
+XGBoost reduced prediction error by approximately **27%** compared with the Linear Regression baseline, demonstrating superior ability to capture nonlinear sales patterns.
+
+---
+
+## Explainability
+
+Implemented SHAP (SHapley Additive Explanations) to provide transparent model predictions.
+
+The dashboard identifies how factors such as:
+
+* Promotions
+* Holidays
+* Recent sales trends
+* Seasonal effects
+
+influence individual sales forecasts.
+
+---
+
+## Dashboard Features
+
+Built using Streamlit and Plotly.
+
+Features include:
+
+* Historical sales visualization
+* Predicted vs actual sales comparison
+* 14-day sales forecasting
+* Forecast tables
+* SHAP feature importance explanations
+* Interactive store-level analysis
+
+---
+
+## Tech Stack
+
+* Python
+* Pandas
+* NumPy
+* Scikit-learn
+* XGBoost
+* SHAP
+* Streamlit
+* Plotly
+
+---
+
+## Project Workflow
+
+Rossmann Dataset
+→ Data Cleaning
+→ Feature Engineering
+→ Time-Based Validation
+→ Linear Regression Baseline
+→ XGBoost Forecasting
+→ Performance Evaluation (RMSE, MAPE)
+→ SHAP Explainability
+→ Streamlit Dashboard
+
+---
+
+## Future Improvements
+
+* Multi-step forecasting models
+* LightGBM comparison
+* Hyperparameter optimization
+* Holiday-specific forecasting enhancements
+* Cloud deployment
+
