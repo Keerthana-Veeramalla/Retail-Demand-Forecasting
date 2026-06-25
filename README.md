@@ -1,6 +1,6 @@
 # Retail Demand Forecasting & Explainability Dashboard
 
-An end-to-end machine learning system for forecasting daily retail sales using the Rossmann Store Sales dataset. The project compares a Linear Regression baseline against an XGBoost model, applies proper time-series validation, and provides prediction explainability through SHAP within an interactive Streamlit dashboard.
+An end-to-end machine learning system for forecasting daily retail sales using the Rossmann Store Sales dataset. The project compares a Linear Regression baseline against an XGBoost model, achieving a test RMSE of 949.51 and MAPE of 10.30%, while providing prediction explainability through SHAP within an interactive Streamlit dashboard.
 
 ## Business Problem
 
@@ -113,7 +113,7 @@ This prevents future information leakage and better reflects real-world forecast
 | Fold   | RMSE    | MAPE   |
 | ------ | ------- | ------ |
 | Fold 1 | 1195.35 | 12.18% |
-| Fold 2 | 963.61  | N/A*   |
+| Fold 2 | 963.61  |   -    |
 | Fold 3 | 936.91  | 10.23% |
 
 *MAPE became unstable due to zero-sales observations in the validation window.
