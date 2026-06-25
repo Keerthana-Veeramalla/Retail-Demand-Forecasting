@@ -154,6 +154,20 @@ Features include:
 
 ---
 
+## Dashboard Preview
+
+### Historical Sales Trends
+
+![Historical Sales](dashboard_history.png)
+
+### Predicted vs Actual Performance
+
+![Predicted vs Actual](dashboard_performance.png)
+
+### Future Sales Forecast
+
+![Forecast](dashboard_forecast.png)
+
 ## Tech Stack
 
 * Python
